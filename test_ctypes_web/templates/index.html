@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Packet Dashboard</title>
+  <!-- Chart.js for plotting -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1, h2 { color: #333; }
+    #packetList { list-style-type: none; padding: 0; }
+    #packetList li { background: #f4f4f4; margin: 5px 0; padding: 10px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>Real-Time Packet Dashboard</h1>
+  <h2>Most Frequently Seen Source IPs</h2>
+  <canvas id="ipChart" width="600" height="300"></canvas>
+  
+  <h2>Latest Packets</h2>
+  <ul id="packetList"></ul>
+  
+  <script>
+    // Initialize Chart.js bar chart
+    const ctx = document.getElementById('ipChart').getContext('2d');
+    const ipChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Frequency',
+          data: [],
+          backgroundColor: 'rgba(54, 162, 235, 0.6)'
+        }]
+      },
+      options: {
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+    
+    const packetList = document.getElementById("packetList");
+    
+    // Setup WebSocket connection
+    const ws = new WebSocket("ws://" + window.location.host + "/ws");
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      const packet = data.packet;
+      // Update latest packet list
+      const li = document.createElement("li");
+      li.textContent = `Packet: ${packet.src_ip} -> ${packet.dst_ip}, Protocol: ${packet.protocol}`;
+      packetList.prepend(li);
+      // Keep only the last 10 entries
+      if (packetList.children.length > 10) {
+        packetList.removeChild(packetList.lastChild);
+      }
+      
+      // Update frequency chart
+      const ipCounts = data.ip_counts;
+      ipChart.data.labels = Object.keys(ipCounts);
+      ipChart.data.datasets[0].data = Object.values(ipCounts);
+      ipChart.update();
+    };
+    
+    // Optionally send a ping message to keep the connection open.
+    ws.onopen = () => ws.send("Client connected");
+  </script>
+</body>
+</html>

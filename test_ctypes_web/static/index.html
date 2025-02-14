@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Previous HTML content remains the same... -->
+
+<script>
+    // ... Previous JavaScript code remains the same ...
+
+    // Apply filters
+    async function applyFilters() {
+        try {
+            const srcIp = document.getElementById('srcIpFilter').value;
+            const dstIp = document.getElementById('dstIpFilter').value;
+            const protocol = document.getElementById('protocolFilter').value;
+            const sortBy = document.getElementById('sortBy').value;
+            
+            const params = new URLSearchParams();
+            if (srcIp) params.append('src_ip', srcIp);
+            if (dstIp) params.append('dst_ip', dstIp);
+            if (protocol) params.append('protocol', protocol);
+            params.append('sort_by', sortBy);
+            params.append('limit', maxTableRows.toString());
+            
+            const response = await fetch(`/api/packets?${params}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const packets = await response.json();
+            
+            const tbody = document.getElementById('packetsTable');
+            tbody.innerHTML = '';
+            packets.forEach(packet => addPacketToTable(packet));
+        } catch (error) {
+            console.error('Error applying filters:', error);
+            alert('Error applying filters. Please check your input values.');
+        }
+    }
+
+    // Initialize WebSocket connection
+    function initializeWebSocket() {
+        ws.onopen = () => {
+            console.log('WebSocket connection established');
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'new_packet') {
+                    addPacketToTable(message.data);
+                    updateDnsStats();
+                }
+            } catch (error) {
+                console.error('Error processing WebSocket message:', error);
+            }
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed. Attempting to reconnect...');
+            setTimeout(initializeWebSocket, 5000);
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+    }
+
+    // Add debounce function for filter inputs
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        initDnsChart();
+        updateDnsStats();
+        checkStatus();
+        initializeWebSocket();
+        
+        // Add event listeners
+        document.getElementById('applyFilters').addEventListener('click', applyFilters);
+        
+        // Add debounced input handlers
+        const debouncedApplyFilters = debounce(applyFilters, 500);
+        document.getElementById('srcIpFilter').addEventListener('input', debouncedApplyFilters);
+        document.getElementById('dstIpFilter').addEventListener('input', debouncedApplyFilters);
+        document.getElementById('protocolFilter').addEventListener('input', debouncedApplyFilters);
+        document.getElementById('sortBy').addEventListener('change', applyFilters);
+
+        // Check status periodically
+        setInterval(checkStatus, 30000);
+        
+        // Update DNS stats periodically
+        setInterval(updateDnsStats, 10000);
+    });
+</script>
+</body>
+</html>
