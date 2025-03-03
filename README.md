@@ -8,6 +8,8 @@ run
 
 	sudo ./packet_sniffer
 
+	gcc -o packet_capture sniffer2.c -lpcap 
+
 	sudo setcap cap_net_raw+eip ./packet_capture 
 
 	./packet_capture -t 30 -o capture.tx
