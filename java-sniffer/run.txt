@@ -1,0 +1,3 @@
+mvn compile 
+
+sudo mvn exec:java -Dexec.mainClass="com.sniffer.JavaSniffer" 
