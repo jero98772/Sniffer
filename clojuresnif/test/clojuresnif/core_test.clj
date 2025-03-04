@@ -1,6 +1,6 @@
-(ns clojure-sniffer.core-test
+(ns clojuresnif.core-test
   (:require [clojure.test :refer :all]
-            [clojure-sniffer.core :refer :all]))
+            [clojuresnif.core :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

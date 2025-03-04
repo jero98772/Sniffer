@@ -1,4 +1,4 @@
-# clojure-sniffer
+# clojuresnif
 
 FIXME: description
 
@@ -10,7 +10,8 @@ Download from http://example.com/FIXME.
 
 FIXME: explanation
 
-    $ java -jar clojure-sniffer-0.1.0-standalone.jar [args]
+    lein ring server
+
 
 ## Options
 
